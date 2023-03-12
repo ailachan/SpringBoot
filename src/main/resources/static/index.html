@@ -1,0 +1,203 @@
+<!--
+不用springboot时,打war包,有webapp,但对webapp的资源请求被springmvc拦截到了controller(不使用springmvc是可以访问的)
+可以自己直接设置一个映射路径捕捉这个(webapp目录资源的/**请求路径)映射到(具体webapp资源路径(虚拟)),
+当然改映射到classpath也可以,资源不放webapp放classpath,按流读取发给浏览器响应
+
+springboot web项目打的是jar包,没有webapp,用/也不会拦截到controller中,根本无法直接访问
+访问方式和有webapp时一样,底层直接设置一个映射路径捕捉这个static/**请求到classpath路径,按流读取发给浏览器响应
+
+所以如果前后端分离在classpath外部(file路径)可以自行修改映射方式
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--idea中还要将全局库中设置在此项目生效-->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+<body>
+<div id="app">
+    <el-button type="text" @click="showAddFormDialog">新建</el-button>
+    <el-dialog title="添加产品" :visible.sync="addDialogFormVisible">
+        <el-form ref="form" :model="form" label-width="80px">
+            <el-form-item label="pname">
+                <el-input v-model="form.pname"></el-input>
+            </el-form-item>
+            <el-form-item label="pprice">
+                <el-input v-model="form.pprice"></el-input>
+            </el-form-item>
+            <el-form-item label="pnum">
+                <el-input v-model="form.pnum"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="onSubmitForAdd">提交</el-button>
+                <el-button>取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+
+    <el-table
+            :data="tableData"
+            style="width: 100%">
+        <el-table-column
+                prop="pid"
+                label="pid">
+        </el-table-column>
+        <el-table-column
+                prop="pname"
+                label="pname">
+        </el-table-column>
+        <el-table-column
+                prop="pprice"
+                label="pprice">
+        </el-table-column>
+        <el-table-column
+                prop="pnum"
+                label="pnum">
+        </el-table-column>
+        <el-table-column
+                label="操作">
+            <el-row slot-scope="scope">
+                <el-button type="primary" icon="el-icon-edit" circle @click="showEditFormDialog(scope.row)"></el-button>
+                <el-button type="danger" icon="el-icon-delete" circle @click="showDeleteConfirmDialog(scope.row)"></el-button>
+            </el-row>
+        </el-table-column>
+    </el-table>
+
+
+    <el-dialog title="编辑产品" :visible.sync="editDialogFormVisible">
+        <el-form ref="form" :model="form" label-width="80px">
+            <el-form-item label="pname">
+                <el-input v-model="form.pname"></el-input>
+            </el-form-item>
+            <el-form-item label="pprice">
+                <el-input v-model="form.pprice"></el-input>
+            </el-form-item>
+            <el-form-item label="pnum">
+                <el-input v-model="form.pnum"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="onSubmitForEdit">提交</el-button>
+                <el-button>取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+</div>
+
+
+</body>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            tableData: [],
+            form: {},
+            addDialogFormVisible: false,
+            editDialogFormVisible:false
+        },
+        methods:
+            {
+                selectAll() {
+                    axios.get("http://localhost:8080/products").then((response) => {
+                        this.tableData = response.data.data;
+                    })
+                },
+                onSubmitForAdd() {
+                    /*url,data,config(param:)*/
+                    axios.post("http://localhost:8080/products", this.form).then((response) => {
+                        if (response.data.statusCode == 20021) {
+                            this.$message.success("添加成功,受影响行数大于0");
+                            this.addDialogFormVisible = false;
+                        } else if (response.data.statusCode == 20020) {
+                            this.$message.error("添加失败,受影响行数小于等于0")
+                        } else {
+                            this.$message.error("添加失败,发生异常,异常被异常处理器捕获" + response.data.statusCode)
+                        }
+                    }).finally(() => {
+                        this.selectAll();
+                    })
+                },
+                showAddFormDialog() {
+                    this.addDialogFormVisible = true;
+                    this.form = {}//清空双向绑定的表单数据
+                },
+                showEditFormDialog(currentRowData){
+                    let id = currentRowData.pid;
+                    axios.get("http://localhost:8080/products/"+id).then((response)=>{
+                        if (response.data.statusCode == 20011){
+                            this.editDialogFormVisible = true;
+                            this.form = {};
+                            this.form = response.data.data;
+                        }
+                        else if(response.data.statusCode == 20010) {
+                            this.$message.error(response.data.msg)
+                        }
+                        else
+                        {
+                            this.$message.error(response.data.msg)
+                        }
+                    })
+                },
+                onSubmitForEdit(){
+                    /*url,data,config(param:)*/
+                    alert("requestBefore")
+                    axios.put("http://localhost:8080/products", this.form).then((response) => {
+                        if (response.data.statusCode == 20031) {
+                            this.$message.success("编辑成功,受影响行数大于0");
+                            this.editDialogFormVisible = false;
+                            alert("response")
+                        } else if (response.data.statusCode == 20030) {
+                            this.$message.error("编辑失败,受影响行数小于等于0")
+                        } else {
+                            this.$message.error("编辑失败,发生异常,异常被异常处理器捕获" + response.data.statusCode)
+                        }
+                    }).finally(() => {
+                        //axios是先把当前已触发的方法内所有请求发完,其余代码执行完,然后再回调then的响应
+                        //写在finally以外,onSubmitForEdit以内和axios同一级,则selectAll的get会在put请求后发请求,响应then的回调还没执行,不符合实际情况,应该先put,then回调后再发
+                        this.selectAll();
+                    })
+                    alert("requestAfter")
+                },
+                showDeleteConfirmDialog(currentRowData){
+                    this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        let id = currentRowData.pid;
+                        axios.delete("http://localhost:8080/products/"+id).then((response)=>{
+                            if (response.data.statusCode == 20041){
+                                this.$message.success("删除成功")
+                            }
+                            else if(response.data.statusCode == 20040) {
+                                this.$message.error("删除失败")
+                            }
+                            else
+                            {
+                                this.$message.error(response.data.msg)
+                            }
+                        }).finally(() => {
+                            this.selectAll();
+                        });
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: '已取消删除'
+                        })
+                    })
+                }
+            },
+        mounted() {
+            this.selectAll()//页面加载完毕后执行
+        }
+    })
+
+</script>
+</html>

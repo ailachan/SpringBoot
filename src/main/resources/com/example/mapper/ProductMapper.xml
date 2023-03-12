@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--与映射接口同一目录可以自动映射过去-->
+<mapper namespace="com.example.mapper.ProductMapper"><!--此处仍然需要同名-->
+    <select id="selectById2" resultType="Product">
+        select * from product where PID = #{id}
+    </select>
+</mapper>

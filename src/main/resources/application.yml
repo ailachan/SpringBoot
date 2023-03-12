@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:mysql:///db_test
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    password: 123456
+    username: root
+mybatis:
+  #mapper-locations: classpath:mapper/*.xml #加了这种方式指定xml映射文件路径后会按namespace来与匹配接口映射
+  #如果不配置locations,按与包名路径相同方式存放xml映射文件,则会按文件名匹配映射接口
+  type-aliases-package: com.example.pojo
