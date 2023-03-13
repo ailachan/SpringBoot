@@ -11,3 +11,4 @@ mybatis:
   type-aliases-package: com.example.pojo
 #motify1
 #pushmodify1
+#pushmodify2
