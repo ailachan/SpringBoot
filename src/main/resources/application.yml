@@ -10,3 +10,4 @@ mybatis:
   #如果不配置locations,按与包名路径相同方式存放xml映射文件,则会按文件名匹配映射接口
   type-aliases-package: com.example.pojo
 #motify1
+#pushmodify1
